@@ -16,7 +16,11 @@ TCPT of Player A, B, and C
 
 **History log Player X agent-Player X.json**
 
-A log of athletes A, B, and C playing using agent-based strategies and raw decision-making logic
+Logs of athletes A, B, and C playing using agent-based strategies and raw decision-making logic
+
+**History log X-X.json**
+
+Match logs between three athletes, A, B, and C
 
 **three_common_tactics.py**
 
