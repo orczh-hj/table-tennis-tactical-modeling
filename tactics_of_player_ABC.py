@@ -76,11 +76,11 @@ def compute_probability(
     returning_idx = (returning[0] + 1) / 2 * 9 + (returning[1] + 1) * 3 + returning[2]
     returning_idx = returning_idx.to(torch.long)
 
-    # Serve handling
+    # Handle serve
     if torch.all(incoming == 0):
         b = tcpt[1, :, returning_idx].mean()
         p = 1 - (1 - b) * qr
-    # Return shot handling
+    # Handle return shot
     else:
         incoming_idx = (incoming[0] + 1) / 2 * 9 + (incoming[1] + 1) * 3 + incoming[2]
         incoming_idx = incoming_idx.to(torch.long)
@@ -102,8 +102,8 @@ class PlayerA:
         """Execute serve with backspin and random placement."""
         incoming = torch.zeros((1, 4), dtype=torch.float, device=DEVICE)
         balls = [
-            [-1, -1, 0, np.clip(random.gauss(0.95, 0.01), 0, 1)],  # 正手短下旋
-            [1, 1, 2, np.clip(random.gauss(0.8, 0.1), 0, 1)],  # 反手长上旋
+            [-1, -1, 0, np.clip(random.gauss(0.95, 0.01), 0, 1)],  # Forehand short backspin
+            [1, 1, 2, np.clip(random.gauss(0.8, 0.1), 0, 1)],  # Backhand long topspin
         ]
         ball = torch.as_tensor(random.choice(balls), dtype=torch.float, device=DEVICE)
         ball = ball.unsqueeze(0)
@@ -123,32 +123,32 @@ class PlayerA:
 
         # Backspin handling
         if spin == -1:
-            if length == 2:  # 下旋长球
-                # 主要冲正手
+            if length == 2:  # Long backspin ball
+                # Mainly attack forehand
                 ball[0] = 1
                 ball[1] = random.choices([-1, 0, 1], [0.6, 0.1, 0.3])[0]
                 ball[2] = 1
                 ball[3] = np.clip(random.gauss(0.9, 0.05), 0, 1)
-            elif length == 1:  # 下旋半出台
-                # 搓反手长
+            elif length == 1:  # Half-long backspin ball
+                # Push backhand long
                 ball[0] = -1
                 ball[1] = 1
                 ball[2] = 1
                 ball[3] = np.clip(random.gauss(0.75, 0.1), 0, 1)
             else:
-                # 搓长球
+                # Push long ball
                 ball[0] = -1
                 ball[1] = random.choice([-1, 0, 1])
                 ball[2] = 1
                 ball[3] = np.clip(random.gauss(0.8, 0.1), 0, 1)
         # Topspin handling
         else:
-            if length == 2:  # 上旋长球
+            if length == 2:  # Long topspin ball
                 ball[0] = 1
                 ball[1] = random.choice([-1, 0, 1])
                 ball[2] = 1
                 ball[3] = np.clip(random.gauss(0.8, 0.1), 0, 1)
-            elif length == 1:  # 上旋半出台
+            elif length == 1:  # Half-long topspin ball
                 ball[0] = 1
                 ball[1] = random.choice([-1, 0, 1])
                 ball[2] = 1
@@ -179,8 +179,8 @@ class PlayerB:
         """Execute topspin serve with varied placement."""
         incoming = torch.zeros((1, 4), dtype=torch.float, device=DEVICE)
         balls = [
-            [-1, 0, 0, np.clip(random.gauss(0.9, 0.05), 0, 1)],  # 中路短下旋
-            [-1, 1, 2, np.clip(random.gauss(0.9, 0.05), 0, 1)],  # 反手长下旋
+            [-1, 0, 0, np.clip(random.gauss(0.9, 0.05), 0, 1)],  # Middle short backspin
+            [-1, 1, 2, np.clip(random.gauss(0.9, 0.05), 0, 1)],  # Backhand long backspin
         ]
         ball = torch.as_tensor(random.choice(balls), dtype=torch.float, device=DEVICE)
         ball = ball.unsqueeze(0)
@@ -200,37 +200,37 @@ class PlayerB:
 
         # Backspin handling
         if spin == -1:
-            if length == 2:  # 下旋长球
-                # 主要冲反手
+            if length == 2:  # Long backspin ball
+                # Mainly attack backhand
                 ball[0] = 1
                 ball[1] = random.choices([-1, 0, 1], [0.3, 0.1, 0.6])[0]
                 ball[2] = 1
                 ball[3] = np.clip(random.gauss(0.9, 0.05), 0, 1)
-            elif length == 1:  # 下旋半出台
-                # 高调，质量稍低
+            elif length == 1:  # Half-long backspin ball
+                # High loop with slightly lower quality
                 ball[0] = 1
                 ball[1] = 1
                 ball[2] = 1
                 ball[3] = np.clip(random.gauss(0.85, 0.1), 0, 1)
             else:
-                # 搓 或 拧拉、挑打
+                # Push or flick, flip
                 ball[0] = random.choices([-1, 1], [0.7, 0.3])[0]
                 ball[1] = random.choice([-1, 0, 1])
                 ball[2] = 1
                 ball[3] = np.clip(random.gauss(0.6, 0.1), 0, 1)
         # Topspin handling
         else:
-            if length == 2:  # 上旋长球
+            if length == 2:  # Long topspin ball
                 ball[0] = 1
                 ball[1] = random.choice([-1, 0, 1])
                 ball[2] = 1
                 ball[3] = np.clip(random.gauss(0.8, 0.1), 0, 1)
-            elif length == 1:  # 上旋半出台
+            elif length == 1:  # Half-long topspin ball
                 ball[0] = 1
                 ball[1] = random.choice([-1, 0, 1])
                 ball[2] = 1
                 ball[3] = np.clip(random.gauss(0.7, 0.1), 0, 1)
-            else:  # 上旋短球
+            else:  # Short topspin ball
                 ball[0] = 1
                 ball[1] = random.choice([-1, 0, 1])
                 ball[2] = 1
@@ -257,9 +257,9 @@ class PlayerC:
         """Execute varied spin serves with deep placement."""
         incoming = torch.zeros((1, 4), dtype=torch.float, device=DEVICE)
         balls = [
-            [1, 1, 2, np.clip(random.gauss(0.8, 0.1), 0, 1)],  # 反手长上旋
-            [-1, 1, 0, np.clip(random.gauss(0.6, 0.1), 0, 1)],  # 反手短下旋
-            [1, -1, 0, np.clip(random.gauss(0.8, 0.1), 0, 1)],  # 正手短上旋
+            [1, 1, 2, np.clip(random.gauss(0.8, 0.1), 0, 1)],  # Backhand long topspin
+            [-1, 1, 0, np.clip(random.gauss(0.6, 0.1), 0, 1)],  # Backhand short backspin
+            [1, -1, 0, np.clip(random.gauss(0.8, 0.1), 0, 1)],  # Forehand short topspin
         ]
         ball = torch.as_tensor(random.choice(balls), dtype=torch.float, device=DEVICE)
 
@@ -280,27 +280,27 @@ class PlayerC:
 
         # Backspin handling
         if spin == -1:
-            if length == 2:  # 下旋长球
-                # 主要拉反手
+            if length == 2:  # Long backspin ball
+                # Mainly loop backhand
                 ball[0] = 1
                 ball[1] = -incoming[1]
                 ball[2] = 1
                 ball[3] = np.clip(random.gauss(0.8, 0.1), 0, 1)
-            elif length == 1:  # 下旋半出台
-                # 搓反手长
+            elif length == 1:  # Half-long backspin ball
+                # Push backhand long
                 ball[0] = -1
                 ball[1] = 1
                 ball[2] = 1
                 ball[3] = np.clip(random.gauss(0.5, 0.1), 0, 1)
             else:
-                # 搓长球
+                # Push long ball
                 ball[0] = -1
                 ball[1] = random.choice([-1, 0, 1])
                 ball[2] = 1
                 ball[3] = np.clip(random.gauss(0.6, 0.1), 0, 1)
         # Topspin handling
         else:
-            if length == 2:  # 上旋长球
+            if length == 2:  # Long topspin ball
                 ball[0] = 1
                 ball[1] = random.choice([-1, 0, 1])
                 ball[2] = 1
@@ -308,7 +308,7 @@ class PlayerC:
                     ball[3] = np.clip(random.gauss(0.7, 0.1), 0, 1)
                 else:
                     ball[3] = np.clip(random.gauss(0.6, 0.1), 0, 1)
-            elif length == 1:  # 上旋半出台
+            elif length == 1:  # Half-long topspin ball
                 ball[0] = 1
                 ball[1] = random.choice([-1, 0, 1])
                 ball[2] = 1
